@@ -4,7 +4,7 @@ const endpoint = "https://tordBot-Alpha.tx296rt2wp.repl.co";
 function getTruths() {
   fetch(`${endpoint}/api/truths`)
     .then(response => response.json())
-    .then(truths => { displayList(truths); selected = "truth" })
+    .then(truths => { selected = "truth"; displayList(truths); })
     .catch(error => console.error(error));
 }
 
@@ -12,7 +12,7 @@ function getTruths() {
 function getDares() {
   fetch(`${endpoint}/api/dares`)
     .then(response => response.json())
-    .then(dares => { displayList(dares); selected = "dare" })
+    .then(dares => { selected = "dare"; displayList(dares); })
     .catch(error => console.error(error));
 }
 
@@ -21,7 +21,7 @@ function getDares() {
 function dareReview() {
   fetch(`${endpoint}/api/review/dares`)
     .then(response => response.json())
-    .then(dares => { displayList(dares, true); selected = "review_dare" })
+    .then(dares => { selected = "review_dare"; displayList(dares, true); })
     .catch(error => console.error(error));
 }
 
@@ -30,7 +30,7 @@ function dareReview() {
 function getServers() {
   fetch(`${endpoint}/api/servers`)
     .then(response => response.json())
-    .then(servers => { displayServers(servers); selected = "server" })
+    .then(servers => { selected = "server"; displayServers(servers); })
     .catch(error => console.error(error));
 }
 
@@ -213,6 +213,38 @@ function deleteReview(id) {
     })
     .catch(error => {
       console.error('Error deleting dare:', error);
+    });
+
+}
+
+function approveItem(item) {
+  let api = "";
+  const id = item.id
+
+  if (selected === "review_dare") api = "/api/review/dare/approve";
+  else if (selected === "review_truth") api = "/api/review/truth/approve";
+  else { console.log("Invalid Selected List"); return; }
+
+  console.log("Sending approve command to ", `${endpoint}${api}`)
+
+  fetch(`${endpoint}${api}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id: id })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reload the page to show the updated truth list
+        dareReview();
+      } else {
+        console.log('Error approving dare');
+      }
+    })
+    .catch(error => {
+      console.error('Error approving dare:', error);
     });
 
 }
