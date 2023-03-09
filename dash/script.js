@@ -6,7 +6,7 @@ function getTruths() {
     .then(response => response.json())
     .then(truths => { selected = "truth"; displayList(truths); })
     .catch(error => console.error(error));
-}
+} d
 
 // Retrieve dares from the server
 function getDares() {
