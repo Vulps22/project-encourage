@@ -7,7 +7,7 @@ function getTruths() {
     .then(truths => { selected = "truth"; displayList(truths); })
     .catch(error => console.error(error));
 } d
-
+d
 // Retrieve dares from the server
 function getDares() {
   fetch(`${endpoint}/api/dares`)
