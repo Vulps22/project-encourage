@@ -2,21 +2,21 @@ const { SlashCommandBuilder, SlashCommandSubcommandBuilder, SlashCommandNumberOp
 const Database = require("../../database");
 const Question = require("../../question");
 const { env } = require("process");
-const { Console } = require("console");
+const { Console, error } = require("console");
 
 banReasonList = [
-	{name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines"},
-	{name: "2 - Childish Content", value: "Childish Content"},
-	{name: "3 - Dangerous Or Illegal Content", value: "Dangerous Or Illegal Content"},
-	{name: "4 - Giver Dare", value: "Giver Dare"},
-	{name: "5 - Mentions A Specific Person", value: "Mentions A Specific Person"},
-	{name: "6 - Nonsense Content", value: "Nonsense Content"},
-	{name: "7 - Not In English", value: "Not In English"},
-	{name: "8 - Poor Spelling Or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer"},
-	{name: "9 - Requires More Than One Person", value: "Requires More Than One Person"},
-	{name: "10 - Shoutout Content", value: "Shoutout Content"},
-	{name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server"}
-  ]
+	{ name: "1 - Breaches Discord T&C or Community Guidelines", value: "Breaches Discord T&C or Community Guidelines" },
+	{ name: "2 - Childish Content", value: "Childish Content" },
+	{ name: "3 - Dangerous Or Illegal Content", value: "Dangerous Or Illegal Content" },
+	{ name: "4 - Giver Dare", value: "Giver Dare" },
+	{ name: "5 - Mentions A Specific Person", value: "Mentions A Specific Person" },
+	{ name: "6 - Nonsense Content", value: "Nonsense Content" },
+	{ name: "7 - Not In English", value: "Not In English" },
+	{ name: "8 - Poor Spelling Or Grammar", value: "Poor Spelling Or Grammar - Feel Free to Resubmit with proper Spelling and Grammer" },
+	{ name: "9 - Requires More Than One Person", value: "Requires More Than One Person" },
+	{ name: "10 - Shoutout Content", value: "Shoutout Content" },
+	{ name: "11 - Suspected U-18 Server", value: "Suspected U-18 Server" }
+]
 
 
 module.exports = {
@@ -35,7 +35,8 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-							)
+				.setAutocomplete(true)
+			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('truth')
@@ -48,7 +49,8 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-							)
+				.setAutocomplete(true)
+			)
 		)
 		.addSubcommand(new SlashCommandSubcommandBuilder()
 			.setName('guild')
@@ -61,10 +63,11 @@ module.exports = {
 			.addStringOption(new SlashCommandStringOption()
 				.setName('reason')
 				.setDescription('Why are you banning this?')
-							)
+				.setAutocomplete(true)
+			)
 		),
 	async execute(interaction) {
-		
+
 		const subcommand = interaction.options.getSubcommand();
 
 		switch (subcommand) {
@@ -123,7 +126,7 @@ module.exports = {
 				}).filter(choice => choice !== null);
 			}
 		}
-		if(focusedOption.name === 'reason') {
+		if (focusedOption.name === 'reason') {
 			choices = banReasonList;
 		}
 		await interaction.respond(choices);
@@ -142,6 +145,7 @@ function banDare(id, reason, interaction) {
 		dare.isBanned = 1;
 		dare.banReason = reason;
 		db.set('dares', dare);
+		updateUserBanCount(interaction, dare.creator);
 		interaction.reply(`Dare has been banned!\n- **ID**: ${dare.id}\n- **Question**: ${dare.question}\n- **Reason**: ${reason}`)
 	});
 }
@@ -157,39 +161,41 @@ function banTruth(id, reason, interaction) {
 		truth.isBanned = 1;
 		truth.banReason = reason;
 		db.set('truths', truth);
+		updateUserBanCount(interaction, dare.creator);
+
 		interaction.reply(`Truth has been banned!\n- **ID**: ${truth.id}\n- **Question**: ${truth.question}\n- **Reason**: ${reason}`)
 	});
 }
 
 async function banGuild(id, reason, interaction) {
-    const db = new Database();
-    
-    try {
-        // Get guild data from the database
-        let guild = await db.get('guilds', id);
-        
-        // Check if guild data exists
-        if (!guild) {
-            interaction.reply('Guild not found!');
-            return;
-        }
-        
-        // Send ban notification
-        sendGuildBanNotification(guild, reason, interaction);
-        
-        // Update guild data
-        guild.isBanned = 1;
-        guild.banReason = reason;
-        
-        // Save updated guild data to the database
-        await db.set('guilds', guild);
-        
-        // Reply to interaction with ban details
-        interaction.reply(`Guild has been banned!\n- **ID**: ${guild.id}\n- **Name**: ${guild.name}\n- **Reason**: ${reason}`);
-    } catch (error) {
-        console.error('Error banning guild:', error);
-        interaction.reply('An error occurred while banning the guild.');
-    }
+	const db = new Database();
+
+	try {
+		// Get guild data from the database
+		let guild = await db.get('guilds', id);
+
+		// Check if guild data exists
+		if (!guild) {
+			interaction.reply('Guild not found!');
+			return;
+		}
+
+		// Send ban notification
+		sendGuildBanNotification(guild, reason, interaction);
+
+		// Update guild data
+		guild.isBanned = 1;
+		guild.banReason = reason;
+
+		// Save updated guild data to the database
+		await db.set('guilds', guild);
+
+		// Reply to interaction with ban details
+		interaction.reply(`Guild has been banned!\n- **ID**: ${guild.id}\n- **Name**: ${guild.name}\n- **Reason**: ${reason}`);
+	} catch (error) {
+		console.error('Error banning guild:', error);
+		interaction.reply('An error occurred while banning the guild.');
+	}
 }
 
 
@@ -211,10 +217,10 @@ async function sendBanNotification(question, reason, type, interaction) {
 			embeds: [embed]
 		}).catch(async (error) => {
 			if (error.code === 50007) {
-			  
-			  await interaction.channel.send(`User's Discord Account was not available to DM`);
+
+				await interaction.channel.send(`User's Discord Account was not available to DM`);
 			} else {
-			  console.error('Error:', error);
+				console.error('Error:', error);
 			}
 		});
 	} catch (error) {
@@ -234,20 +240,70 @@ async function sendGuildBanNotification(guild, reason, interaction) {
 		client.users.send(userId, {
 			content: `Your Server has been banned: \n- **ID**: ${guild.id}\n- **Question**: ${guild.name}\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`
 		})
-		.catch(async (error) => {
-			if (error.code === 50007) {
-			  
-			  await interaction.channel.send(`User's Discord Account was not available to DM`);
-			} else {
-			  console.error('Error:', error);
-			}
-		});
+			.catch(async (error) => {
+				if (error.code === 50007) {
+
+					await interaction.channel.send(`User's Discord Account was not available to DM`);
+				} else {
+					console.error('Error:', error);
+				}
+			});
 	} catch (error) {
 		interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
 		console.log('User Notification Failed: ')
 		console.log(error);
 	}
 }
+
+/**
+ * 
+ * @param {*} user 
+ * @param {*} reason 
+ * @param {*} interaction 
+ */
+
+async function sendUserBanNotification(user, reason, interaction) {
+	const userId = user
+	if (!userId) throw new error("Failed to ban User, UserID cannot be falsey");
+	client = interaction.client;
+	try {
+
+		client.users.send(userId, {
+			content: `You have been permenantly banned from creating new Truths/Dares!\n- **Reason**: ${reason}\n\nIf you feel this was in error you may appeal the ban by opening a ticket on our [Official Server](https://discord.gg/${env.DISCORD_INVITE_CODE})\n\n`,
+		}).catch(async (error) => {
+			if (error.code === 50007) {
+				await interaction.channel.send(`User Has been banned but was not available to DM`);
+			} else {
+				console.error('Error:', error);
+			}
+		});
+		const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_USER_BANS_URL });
+		webhookClient.send(`**Auto Banned**: ${user}\n **Reason**: ${reason}`);
+	} catch (error) {
+		interaction.channel.send('Failed to notify User of ban. Check Logs for more information');
+		console.log('User Notification Failed: ');
+		console.log(error);
+	}
+}
+
+async function updateUserBanCount(interaction, creator) {
+	if (!creator) return;
+
+	const db = new Database();
+
+	let user = await db.get("users", creator);
+
+	user.bannedQuestions++;
+
+	if (user.banned_questions >= 5) {
+		user.is_banned = true;
+		user.ban_reason = "Banned Question Limit Exceeded";
+		sendUserBanNotification(user.id, user.ban_reason, interaction);
+	}
+
+	db.set('users', user);
+}
+
 
 function guidanceEmbed() {
 
@@ -261,7 +317,7 @@ function guidanceEmbed() {
 			{ name: 'Follow Discord Guidelines', value: '- No Racism, Underage references etc.' },
 			{ name: 'Use English', value: '- For bot language support' },
 			{ name: 'No Nonsense Content', value: '- Avoid keyboard smashing, single letters etc' },
-			{ name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored'},
+			{ name: 'No Childish Content', value: '- Could be written by a child/teen, or likely to be ignored' },
 			{ name: 'No Shoutouts', value: '- Using names, "I am awesome!"' },
 			{ name: 'No Dares That Require More Than One Person', value: '- This is an **online** bot!' },
 			{ name: 'Check Spelling And Grammar', value: '- Low-Effort content will not be accepted' },

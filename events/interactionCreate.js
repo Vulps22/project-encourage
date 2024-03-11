@@ -51,6 +51,8 @@ function log(interaction) {
 }
 
 function hasPermission(interaction) {
+	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_COMMAND_URL });
+
 	const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
 
