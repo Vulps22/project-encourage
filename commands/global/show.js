@@ -66,13 +66,3 @@ async function sendTerms(interaction, isAdmin) {
 	await interaction.reply({ ephemeral: true, embeds: [termsEmbed], components });
 }
 
-async function handleAcceptTerms(interaction) {
-	
-}
-
-async function handleRejectTerms(interaction) {
-	await i.update({ content: 'Terms declined. Leaving server...', components: [] });
-	const webhookClient = new WebhookClient({ url: process.env.WEBHOOK_SERVER_URL });
-	webhookClient.send(`${interaction.guild.name} has rejected Terms and the bot is leaving!`);
-	i.guild.leave();
-}
