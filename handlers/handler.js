@@ -1,5 +1,5 @@
-const Database = require('./database');
-const Question = require('./question.js');
+const Database = require('../database.js');
+const Question = require('../question.js');
 
 class Handler {
   constructor() {

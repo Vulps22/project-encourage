@@ -1,5 +1,5 @@
 const { Events, WebhookClient } = require("discord.js");
-const UserHandler = require("../userHandler");
+const UserHandler = require("../handlers/userHandler");
 const Database = require("../database");
 
 module.exports = {
@@ -11,13 +11,21 @@ module.exports = {
 			return;
 		}
 
-		if (interaction.isChatInputCommand()){
+		if (interaction.isButton()) {
+			console.log("Looking for button: ", interaction.customId);
+			buttonHandler = interaction.client.buttons.get(interaction.customId);
+			if (buttonHandler) {
+				console.log("Button found");
+				await buttonHandler(interaction);
+			}
+		}
+		if (interaction.isChatInputCommand()) {
 			log(interaction);
-			if(!hasPermission(interaction)) return;
+			if (!hasPermission(interaction)) return;
 			console.log("Call RunCommand");
 			await runCommand(interaction);
 		}
-		
+
 	},
 };
 
@@ -56,20 +64,20 @@ function hasPermission(interaction) {
 	const botPermissions = interaction.guild.members.me.permissionsIn(interaction.channel);
 
 
-		if (!botPermissions.has('SendMessages')) {
-			interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
-			webhookClient.send(`Interaction Failed: No Permissions`);
-			return;
-		}
+	if (!botPermissions.has('SendMessages')) {
+		interaction.reply('I do not have permission to send messages in this channel. I require permission to `send messages` and `embed links` to function correctly');
+		webhookClient.send(`Interaction Failed: No Permissions`);
+		return;
+	}
 
-		if (!botPermissions.has('EmbedLinks')) {
-			interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
-			webhookClient.send(`Interaction Failed: No Permissions`);
-			return;
-		}
+	if (!botPermissions.has('EmbedLinks')) {
+		interaction.reply('I do not have permission to embed links in this channel. I require permission to `send messages` and `embed links` to function correctly');
+		webhookClient.send(`Interaction Failed: No Permissions`);
+		return;
+	}
 
-		console.log("Permission granted");
-		return true;
+	console.log("Permission granted");
+	return true;
 }
 
 async function runCommand(interaction) {
@@ -89,7 +97,7 @@ async function runCommand(interaction) {
 
 		console.log(guild);
 
-		if(!guild) {
+		if (!guild) {
 			db = new Database();
 			guild = { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }
 			//await db.set('guilds', guild);
@@ -103,7 +111,7 @@ async function runCommand(interaction) {
 			return;
 		}
 
-		if(shouldExecute(interaction, guild)) await command.execute(interaction);
+		if (shouldExecute(interaction, guild)) await command.execute(interaction);
 	} catch (error) {
 		console.error(`Error executing ${interaction.commandName}`);
 		console.error(error);
@@ -134,5 +142,5 @@ function shouldExecute(interaction, guild) {
 		db.set('guilds', guild); //We always update the guild so that we can see servers that have been inactive
 		console.log("Command should Execute");
 		return true;
-	}else return true; //Without this, we block setup and accept-terms
+	} else return true; //Without this, we block setup and accept-terms
 }

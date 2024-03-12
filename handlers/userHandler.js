@@ -2,9 +2,8 @@ require('dotenv').config();
 const { EmbedBuilder, Embed } = require('discord.js');
 
 const Handler = require('./handler.js')
-const Question = require('./question.js');
-const Database = require('./database.js');
-const embedder = require('./embedder.js');
+const Database = require('../database.js');
+const embedder = require('../embedder.js');
 
 class UserHandler extends Handler {
 
@@ -26,7 +25,7 @@ class UserHandler extends Handler {
 	startSetup(interaction) {
 
 		const embed = this.getTerms();
-		const guild = this.findGuild(interaction.guildId).then((data) => {
+		this.findGuild(interaction.guildId).then((data) => {
 			if (!data) this.db.set('guilds', { id: interaction.guildId, name: interaction.guild.name, hasAccepted: 0, isBanned: 0 }).then(() => {
 				interaction.reply({ embeds: [embed] });
 			})
@@ -40,22 +39,22 @@ class UserHandler extends Handler {
 
 	async acceptSetup(interaction) {
 
-		const guild = await this.findGuild(interaction.guildId).then((data) => {
+		this.findGuild(interaction.guildId).then((data) => {
 			if (!data) {
-				interaction.reply("You must first use /setup and read the Terms of Use");
+				interaction.channel.send({ content: "You must first use /setup and read the Terms of Use", ephemeral: true });
 				return;
 			}
 
 			if (data.hasAccepted) {
-				interaction.reply('You have already accepted my terms');
+				interaction.channel.send({ content: 'You have already accepted my terms', ephemeral: true });
 				return;
 			}
 
 			let g = data;
 			g.id = interaction.guildId;
-			g.hasAccepted = 1;
+			g.hasAccepted = 0;
 			this.db.set('guilds', g);
-			interaction.reply({ embeds: [embedder.accepted()] });
+			interaction.reply({ ephemeral: true, embeds: [embedder.accepted()] });
 		})
 	}
 

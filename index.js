@@ -6,9 +6,9 @@ const { Routes } = require('discord-api-types/v9');
 const { modCommands } = require('./command.js');
 const { Client, GatewayIntentBits, Collection, WebhookClient } = require('discord.js');
 const Database = require('./database.js'); //import Database class
-const DareHandler = require('./dareHandler.js'); // import DareHandler
-const TruthHandler = require('./truthHandler.js'); // import TruthHandler
-const UserHandler = require('./userHandler.js'); // import TruthHandler
+const DareHandler = require('./handlers/dareHandler.js'); // import DareHandler
+const TruthHandler = require('./handlers/truthHandler.js'); // import TruthHandler
+const UserHandler = require('./handlers/userHandler.js'); // import TruthHandler
 const Question = require('./question.js');
 const { exit } = require('node:process');
 
@@ -63,6 +63,7 @@ for (const file of eventFiles) {
 
 //load the commands
 client.commands = new Collection();
+client.buttons = new Collection();
 
 const commandsPathG = path.join(__dirname, "commands/global");
 const commandFilesG = fs.readdirSync(commandsPathG)
@@ -91,5 +92,19 @@ for (const file of commandFilesM) {
 		console.warn(`[WARNING] The command at ${filePath} is missing a required 'data or 'execute property`)
 	}
 }
+
+// Load button handlers
+const buttonHandlersPath = path.join(__dirname, 'handlers/buttonHandler.js');
+const buttonHandlers = require(buttonHandlersPath);
+
+// Add all exported functions from buttonHandlers to client.buttonHandlers
+for (const [id, handler] of Object.entries(buttonHandlers)) {
+	
+	if (typeof handler === 'function') {
+		console.log("found ", id);
+		client.buttons.set(id, handler);
+	}
+}
+console.log(client.buttons);
 
 client.login(TOKEN);
