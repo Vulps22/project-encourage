@@ -52,7 +52,7 @@ class UserHandler extends Handler {
 
 			let g = data;
 			g.id = interaction.guildId;
-			g.hasAccepted = 0;
+			g.hasAccepted = 1;
 			this.db.set('guilds', g);
 			interaction.reply({ ephemeral: true, embeds: [embedder.accepted()] });
 		})
