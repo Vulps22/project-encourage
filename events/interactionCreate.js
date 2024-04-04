@@ -25,7 +25,6 @@ module.exports = {
 			console.log("Call RunCommand");
 			await runCommand(interaction);
 		}
-
 	},
 };
 

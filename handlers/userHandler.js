@@ -22,6 +22,13 @@ class UserHandler extends Handler {
 			});
 	}
 
+	async findUser(id) {
+		if (!id) return;
+		return this.db.get('users', id).then(user => {
+			return user;
+		})
+	}
+
 	startSetup(interaction) {
 
 		const embed = this.getTerms();
