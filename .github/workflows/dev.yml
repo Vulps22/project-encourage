@@ -1,0 +1,14 @@
+name: Main Branch Testing
+
+on:
+    push:
+        branches:
+          - main
+    pull_request:
+        branches:
+          - main
+          - current-release
+
+jobs:
+    test:
+        uses: ./.github/workflows/test.yml

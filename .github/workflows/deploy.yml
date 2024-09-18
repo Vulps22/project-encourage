@@ -1,0 +1,27 @@
+name: Deploy to Production
+
+on:
+  workflow_call:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CONTABO_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PRODUCTION_URL }} >> ~/.ssh/known_hosts
+
+      - name: Install new Image on Production
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_URL }} "
+            cd /var/project-encourage &&
+            docker compose pull bot &&
+            docker compose up -d bot
+          "

@@ -1,0 +1,20 @@
+name: Test, Package, And Deploy
+
+on:
+    push:
+        branches:
+          - current-release
+
+jobs:
+    test:
+        uses: ./.github/workflows/test.yml
+    package:
+        needs: test
+        uses: ./.github/workflows/package.yml
+        secrets: inherit
+    deploy:
+        needs: 
+            - test
+            - package
+        uses: ./.github/workflows/deploy.yml
+        secrets: inherit
